@@ -1,0 +1,13 @@
+{
+  "name": "photo-album",
+  "version": "1.0.0",
+  "description": "A photo album with masonry layout",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js",
+    "build": "node build.js",
+    "start": "node server.js"
+  },
+  "keywords": ["photo", "album", "masonry"],
+  "license": "MIT"
+}

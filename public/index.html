@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>相册</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <aside id="sidebar">
+      <div class="sidebar-header">
+        <h1>相册</h1>
+      </div>
+      <div class="tree-container">
+        <div class="tree-item active" data-view="all">
+          <span class="tree-icon">📁</span>
+          <span class="tree-label">全部</span>
+          <span class="tree-count" id="total-count"></span>
+        </div>
+        <div id="tree-root"></div>
+      </div>
+    </aside>
+
+    <main id="content">
+      <div id="gallery" class="masonry"></div>
+    </main>
+
+    <div id="lightbox" class="lightbox hidden">
+      <div class="lightbox-backdrop"></div>
+      <div class="lightbox-content">
+        <button class="lightbox-close">&times;</button>
+        <div class="lightbox-media"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container" style="position:fixed;top:20px;right:20px;z-index:2000;display:flex;flex-direction:column;gap:10px"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
