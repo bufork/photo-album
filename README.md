@@ -9,6 +9,7 @@
 - **瀑布流布局**：响应式列数，自适应屏幕宽度
 - **媒体预览**：左键点击查看大图/播放视频，鼠标悬停视频自动预览
 - **直链复制**：右键复制媒体文件直链（基于当前访问域名）
+- **密码保护**：支持首页密码验证，保护相册隐私
 - **Range 请求**：支持视频/音频流式传输和断点续传
 
 ## 支持的文件格式
@@ -54,7 +55,9 @@ PORT=8080 MEDIA_DIR=D:\Photos pnpm dev
 {
   "title": "我的相册",
   "description": "家庭相册",
-  "favicon": "assets/favicon.png"
+  "favicon": "assets/favicon.png",
+  "password": "your-password",
+  "salt": "your-salt"
 }
 ```
 
@@ -63,6 +66,8 @@ PORT=8080 MEDIA_DIR=D:\Photos pnpm dev
 | `title` | 浏览器标签标题 |
 | `description` | 页面描述（SEO） |
 | `favicon` | 浏览器标签图标（支持本地路径或 URL） |
+| `password` | 访问密码（留空则无需密码） |
+| `salt` | 密码加盐（留空则不加盐） |
 
 将 favicon 文件放入 `assets/` 目录。
 

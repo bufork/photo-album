@@ -1,5 +1,7 @@
 {
   "title": "相册",
   "description": "我的相册",
-  "favicon": "assets/favicon.png"
+  "favicon": "assets/favicon.png",
+  "password": "li20031027",
+  "salt": "4ec698774d2ac18d822040c2bce29b352fa82b60b4441e6355c54d46596bcb99a59c1cfa282a49e2d90afcf0136d9c4c5e1cf5e347f8670ed2991683ad3492e3"
 }

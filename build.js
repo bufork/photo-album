@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 const MEDIA_DIR = process.env.MEDIA_DIR || path.join(__dirname, 'media');
 const DIST_DIR = path.join(__dirname, 'dist');
@@ -16,8 +17,13 @@ function loadSite() {
   try {
     return JSON.parse(fs.readFileSync(SITE_PATH, 'utf-8'));
   } catch {
-    return { title: '相册', description: '我的相册', favicon: '' };
+    return { title: '相册', description: '我的相册', favicon: '', password: '', salt: '' };
   }
+}
+
+function hashPassword(password, salt) {
+  const salted = salt ? salt + password : password;
+  return crypto.createHash('sha256').update(salted).digest('hex');
 }
 
 function getMediaType(ext) {
@@ -127,6 +133,7 @@ window.__STATIC__ = true;
 
   const faviconTag = site.favicon ? `<link rel="icon" href="${site.favicon}">` : '';
   const metaDesc = site.description ? `<meta name="description" content="${site.description}">` : '';
+  const passwordHash = site.password ? hashPassword(site.password, site.salt) : '';
 
   const finalHtml = `<!DOCTYPE html>
 <html lang="zh-CN">
@@ -136,10 +143,29 @@ window.__STATIC__ = true;
   ${faviconTag}
   ${metaDesc}
   <title>${site.title}</title>
-  <style>${css}</style>
+  <style>${css}
+.login-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:#1a1a1a;display:flex;align-items:center;justify-content:center;z-index:9999}
+.login-box{text-align:center;padding:40px;background:#2a2a2a;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.5)}
+.login-box h2{color:#fff;margin-bottom:20px;font-size:24px}
+.login-box input{width:250px;padding:12px 16px;border:1px solid #444;border-radius:6px;background:#3a3a3a;color:#fff;font-size:16px;outline:none}
+.login-box input:focus{border-color:#666}
+.login-box button{margin-top:15px;padding:12px 30px;border:none;border-radius:6px;background:#4a9eff;color:#fff;font-size:16px;cursor:pointer}
+.login-box button:hover{background:#3a8eef}
+.login-error{color:#ff6b6b;margin-top:10px;font-size:14px;display:none}
+  </style>
 </head>
 <body>
-  <div id="app">
+  <div id="login-overlay" class="login-overlay"${passwordHash ? '' : ' style="display:none"'}>
+    <div class="login-box">
+      <h2>${site.title}</h2>
+      <input type="password" id="password-input" placeholder="请输入密码" autofocus>
+      <br>
+      <button onclick="checkPassword()">进入</button>
+      <div id="login-error" class="login-error">密码错误</div>
+    </div>
+  </div>
+
+  <div id="app" style="display:none">
     <aside id="sidebar">
       <div class="sidebar-header">
         <h1>${site.title}</h1>
@@ -170,15 +196,56 @@ window.__STATIC__ = true;
   <div id="toast" class="toast hidden"></div>
 
   ${dataScript}
+  <script>
+window.__HASH__ = '${passwordHash}';
+window.__SALT__ = '${site.salt || ''}';
+  </script>
   <script>${staticJs}</script>
   <script>
-(function() {
+async function sha256(message) {
+  const salted = window.__SALT__ + message;
+  const msgBuffer = new TextEncoder().encode(salted);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function checkPassword() {
+  const input = document.getElementById('password-input').value;
+  const hash = await sha256(input);
+  if (hash === window.__HASH__) {
+    localStorage.setItem('album_auth', '1');
+    document.getElementById('login-overlay').style.display = 'none';
+    document.getElementById('app').style.display = '';
+    initApp();
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+  }
+}
+
+document.getElementById('password-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') checkPassword();
+});
+
+function initApp() {
   const data = window.__DATA__;
   allFiles = data.allFiles;
   tree = data.tree;
   renderTree();
   renderGallery(allFiles);
   document.querySelector('.tree-item[data-view="all"]').addEventListener('click', switchToAll);
+}
+
+(function() {
+  if (!window.__HASH__) {
+    document.getElementById('login-overlay').style.display = 'none';
+    document.getElementById('app').style.display = '';
+    initApp();
+  } else if (localStorage.getItem('album_auth') === '1') {
+    document.getElementById('login-overlay').style.display = 'none';
+    document.getElementById('app').style.display = '';
+    initApp();
+  }
 })();
   </script>
 </body>
