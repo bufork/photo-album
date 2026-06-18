@@ -3,7 +3,6 @@ const path = require('path');
 
 const MEDIA_DIR = process.env.MEDIA_DIR || path.join(__dirname, 'media');
 const DIST_DIR = path.join(__dirname, 'dist');
-const CONFIG_PATH = path.join(__dirname, 'config.json');
 const SITE_PATH = path.join(__dirname, 'site.json');
 const ASSETS_DIR = path.join(__dirname, 'assets');
 
@@ -12,14 +11,6 @@ const MEDIA_EXTS = new Set([
   '.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv', '.flv', '.wmv', '.m4v',
   '.mp3', '.wav', '.ogg', '.flac', '.aac', '.wma', '.m4a', '.opus'
 ]);
-
-function loadConfig() {
-  try {
-    return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
-  } catch {
-    return { ignoreDirs: [] };
-  }
-}
 
 function loadSite() {
   try {
@@ -30,16 +21,13 @@ function loadSite() {
 }
 
 function getMediaType(ext) {
-  const imageExts = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg', '.ico', '.tiff', '.tif'];
-  const videoExts = ['.mp4', '.webm', '.mov', '.avi', '.mkv', '.flv', '.wmv', '.m4v'];
-  const audioExts = ['.mp3', '.wav', '.ogg', '.flac', '.aac', '.wma', '.m4a', '.opus'];
-  if (imageExts.includes(ext)) return 'image';
-  if (videoExts.includes(ext)) return 'video';
-  if (audioExts.includes(ext)) return 'audio';
+  if (['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg', '.ico', '.tiff', '.tif'].includes(ext)) return 'image';
+  if (['.mp4', '.webm', '.mov', '.avi', '.mkv', '.flv', '.wmv', '.m4v'].includes(ext)) return 'video';
+  if (['.mp3', '.wav', '.ogg', '.flac', '.aac', '.wma', '.m4a', '.opus'].includes(ext)) return 'audio';
   return 'unknown';
 }
 
-function scanDirectory(dir, basePath = '', ignoreSet) {
+function scanDirectory(dir, basePath = '') {
   const result = { name: path.basename(dir) || 'root', path: basePath, files: [], children: [] };
 
   try {
@@ -50,8 +38,7 @@ function scanDirectory(dir, basePath = '', ignoreSet) {
       const relativePath = basePath ? `${basePath}/${entry.name}` : entry.name;
 
       if (entry.isDirectory()) {
-        if (ignoreSet.has(entry.name)) continue;
-        const child = scanDirectory(fullPath, relativePath, ignoreSet);
+        const child = scanDirectory(fullPath, relativePath);
         if (child.files.length > 0 || child.children.length > 0) {
           result.children.push(child);
         }
@@ -112,15 +99,13 @@ function build() {
   }
   fs.mkdirSync(DIST_DIR, { recursive: true });
 
-  const config = loadConfig();
   const site = loadSite();
-  const ignoreSet = new Set(config.ignoreDirs);
 
   let tree = { name: 'root', path: '', files: [], children: [] };
   let allFiles = [];
 
   if (fs.existsSync(MEDIA_DIR)) {
-    tree = scanDirectory(MEDIA_DIR, '', ignoreSet);
+    tree = scanDirectory(MEDIA_DIR, '');
     allFiles = getAllFiles(tree);
   }
 

@@ -9,7 +9,6 @@
 - **瀑布流布局**：响应式列数，自适应屏幕宽度
 - **媒体预览**：左键点击查看大图/播放视频，鼠标悬停视频自动预览
 - **直链复制**：右键复制媒体文件直链（基于当前访问域名）
-- **忽略目录**：通过 `config.json` 配置需要忽略的目录，dev 和 build 模式均生效
 - **Range 请求**：支持视频/音频流式传输和断点续传
 
 ## 支持的文件格式
@@ -49,8 +48,6 @@ PORT=8080 MEDIA_DIR=D:\Photos pnpm dev
 
 ## 配置
 
-### 站点配置
-
 编辑 `site.json` 自定义浏览器标签标题、图标等：
 
 ```json
@@ -69,23 +66,12 @@ PORT=8080 MEDIA_DIR=D:\Photos pnpm dev
 
 将 favicon 文件放入 `assets/` 目录。
 
-### 忽略目录
-
-编辑 `config.json` 配置需要忽略的目录：
-
-```json
-{
-  "ignoreDirs": ["backup", "temp", "private"]
-}
-```
-
 ## 项目结构
 
 ```
 相册/
 ├── server.js          # Node.js 开发服务器
 ├── build.js           # 静态构建脚本
-├── config.json        # 忽略目录配置
 ├── site.json          # 站点配置（标题、图标等）
 ├── package.json       # 项目配置
 ├── media/             # 媒体文件目录（图片/视频/音频）

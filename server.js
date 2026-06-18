@@ -5,15 +5,6 @@ const url = require('url');
 
 const PORT = process.env.PORT || 3000;
 const MEDIA_DIR = process.env.MEDIA_DIR || path.join(__dirname, 'media');
-const CONFIG_PATH = path.join(__dirname, 'config.json');
-
-function loadConfig() {
-  try {
-    return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
-  } catch {
-    return { ignoreDirs: [] };
-  }
-}
 
 const MEDIA_EXTS = new Set([
   '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg', '.ico', '.tiff', '.tif',
@@ -45,18 +36,13 @@ const MIME_TYPES = {
 };
 
 function getMediaType(ext) {
-  const imageExts = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg', '.ico', '.tiff', '.tif'];
-  const videoExts = ['.mp4', '.webm', '.mov', '.avi', '.mkv', '.flv', '.wmv', '.m4v'];
-  const audioExts = ['.mp3', '.wav', '.ogg', '.flac', '.aac', '.wma', '.m4a', '.opus'];
-  if (imageExts.includes(ext)) return 'image';
-  if (videoExts.includes(ext)) return 'video';
-  if (audioExts.includes(ext)) return 'audio';
+  if (['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg', '.ico', '.tiff', '.tif'].includes(ext)) return 'image';
+  if (['.mp4', '.webm', '.mov', '.avi', '.mkv', '.flv', '.wmv', '.m4v'].includes(ext)) return 'video';
+  if (['.mp3', '.wav', '.ogg', '.flac', '.aac', '.wma', '.m4a', '.opus'].includes(ext)) return 'audio';
   return 'unknown';
 }
 
 function scanDirectory(dir, basePath = '') {
-  const config = loadConfig();
-  const ignoreSet = new Set(config.ignoreDirs);
   const result = { name: path.basename(dir) || 'root', path: basePath, files: [], children: [] };
 
   try {
@@ -67,7 +53,6 @@ function scanDirectory(dir, basePath = '') {
       const relativePath = basePath ? `${basePath}/${entry.name}` : entry.name;
 
       if (entry.isDirectory()) {
-        if (ignoreSet.has(entry.name)) continue;
         const child = scanDirectory(fullPath, relativePath);
         if (child.files.length > 0 || child.children.length > 0) {
           result.children.push(child);
