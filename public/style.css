@@ -145,8 +145,6 @@ h1 {
 }
 
 .media-item {
-  break-inside: avoid;
-  margin-bottom: 12px;
   border-radius: 8px;
   overflow: hidden;
   position: relative;

@@ -2,6 +2,10 @@ let allFiles = [];
 let tree = null;
 let currentView = 'all';
 let currentCategory = '';
+let currentPage = 0;
+let isLoading = false;
+let hasMore = true;
+const PAGE_SIZE = 20;
 
 document.addEventListener('contextmenu', e => e.preventDefault());
 
@@ -121,6 +125,9 @@ function switchToAll() {
 
 function renderGallery(files) {
   const gallery = document.getElementById('gallery');
+  allFiles = files;
+  currentPage = 0;
+  hasMore = true;
 
   if (files.length === 0) {
     gallery.innerHTML = `
@@ -133,53 +140,99 @@ function renderGallery(files) {
   }
 
   gallery.innerHTML = '';
+  loadNextPage();
+}
 
-  for (const file of files) {
-    const item = document.createElement('div');
-    item.className = 'media-item';
+function createMediaItem(file) {
+  const item = document.createElement('div');
+  item.className = 'media-item';
 
-    if (file.type === 'image') {
-      const img = document.createElement('img');
-      img.src = `/media/${file.path}`;
-      img.loading = 'lazy';
-      img.alt = file.name;
-      item.appendChild(img);
-    } else if (file.type === 'video') {
-      const video = document.createElement('video');
-      video.src = `/media/${file.path}`;
-      video.preload = 'metadata';
-      video.muted = true;
-      video.playsInline = true;
-      item.appendChild(video);
+  if (file.type === 'image') {
+    const img = document.createElement('img');
+    img.src = `/media/${file.path}`;
+    img.loading = 'lazy';
+    img.alt = file.name;
+    item.appendChild(img);
+  } else if (file.type === 'video') {
+    const video = document.createElement('video');
+    video.src = `/media/${file.path}`;
+    video.preload = 'metadata';
+    video.muted = true;
+    video.playsInline = true;
+    item.appendChild(video);
 
-      video.addEventListener('mouseenter', () => video.play());
-      video.addEventListener('mouseleave', () => { video.pause(); video.currentTime = 0; });
-    } else if (file.type === 'audio') {
-      const thumb = document.createElement('div');
-      thumb.className = 'audio-thumb';
-      thumb.textContent = '🎵';
-      item.appendChild(thumb);
-    }
-
-    const overlay = document.createElement('div');
-    overlay.className = 'overlay';
-    overlay.innerHTML = `
-      <div class="filename">${file.name}</div>
-      ${file.category ? `<div class="category-tag">${file.category}</div>` : ''}
-    `;
-    item.appendChild(overlay);
-
-    item.addEventListener('click', (e) => {
-      if (e.button === 0) openLightbox(file);
-    });
-
-    item.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
-      copyLink(file);
-    });
-
-    gallery.appendChild(item);
+    video.addEventListener('mouseenter', () => video.play());
+    video.addEventListener('mouseleave', () => { video.pause(); video.currentTime = 0; });
+  } else if (file.type === 'audio') {
+    const thumb = document.createElement('div');
+    thumb.className = 'audio-thumb';
+    thumb.textContent = '🎵';
+    item.appendChild(thumb);
   }
+
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay';
+  overlay.innerHTML = `
+    <div class="filename">${file.name}</div>
+    ${file.category ? `<div class="category-tag">${file.category}</div>` : ''}
+  `;
+  item.appendChild(overlay);
+
+  item.addEventListener('click', (e) => {
+    if (e.button === 0) openLightbox(file);
+  });
+
+  item.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    copyLink(file);
+  });
+
+  return item;
+}
+
+function loadNextPage() {
+  if (isLoading || !hasMore) return;
+
+  isLoading = true;
+  const gallery = document.getElementById('gallery');
+  const startIndex = currentPage * PAGE_SIZE;
+  const endIndex = Math.min(startIndex + PAGE_SIZE, allFiles.length);
+
+  if (startIndex >= allFiles.length) {
+    hasMore = false;
+    isLoading = false;
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+  for (let i = startIndex; i < endIndex; i++) {
+    fragment.appendChild(createMediaItem(allFiles[i]));
+  }
+  gallery.appendChild(fragment);
+
+  currentPage++;
+  if (endIndex >= allFiles.length) {
+    hasMore = false;
+  }
+
+  isLoading = false;
+}
+
+function setupIntersectionObserver() {
+  const sentinel = document.getElementById('scroll-sentinel');
+  if (!sentinel) return;
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && hasMore && !isLoading) {
+        loadNextPage();
+      }
+    });
+  }, {
+    rootMargin: '200px',
+  });
+
+  observer.observe(sentinel);
 }
 
 function openLightbox(file) {
@@ -265,3 +318,7 @@ document.querySelector('.tree-item[data-view="all"]').addEventListener('click', 
 // BEGIN_STATIC_REMOVE
 loadData();
 // END_STATIC_REMOVE
+
+document.addEventListener('DOMContentLoaded', () => {
+  setupIntersectionObserver();
+});
