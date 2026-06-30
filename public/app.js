@@ -280,17 +280,33 @@ function copyLink(file) {
   const baseUrl = window.location.origin;
   const link = `${baseUrl}/media/${file.path}`;
 
-  navigator.clipboard.writeText(link).then(() => {
-    showToast('链接已复制');
-  }).catch(() => {
-    const input = document.createElement('input');
-    input.value = link;
-    document.body.appendChild(input);
-    input.select();
-    document.execCommand('copy');
-    document.body.removeChild(input);
-    showToast('链接已复制');
-  });
+  const fallbackCopy = () => {
+    const textarea = document.createElement('textarea');
+    textarea.value = link;
+    textarea.style.position = 'fixed';
+    textarea.style.left = '-9999px';
+    textarea.style.top = '-9999px';
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    try {
+      document.execCommand('copy');
+      showToast('链接已复制');
+    } catch (err) {
+      showToast('复制失败');
+    }
+    document.body.removeChild(textarea);
+  };
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(link).then(() => {
+      showToast('链接已复制');
+    }).catch(() => {
+      fallbackCopy();
+    });
+  } else {
+    fallbackCopy();
+  }
 }
 
 const TOAST_MAX = 5;
